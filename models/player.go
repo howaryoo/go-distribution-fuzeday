@@ -80,8 +80,7 @@ func (p *Player) Activate(displayChannel chan *DisplayStatus, wg *sync.WaitGroup
 
 	// launching main life cycle
 	// TODO Challenge (1): call p.mainLifeCycle in a goroutine and implement it internally
-	//go p.mainLifeCycle()
-
+	go p.mainLifeCycle(displayChannel, wg)
 }
 
 func (p *Player) setIdleKinematics() {
