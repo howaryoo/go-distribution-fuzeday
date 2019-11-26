@@ -6,7 +6,6 @@ import (
 	"go-distribution-fuzeday/models"
 	"net/http"
 	"sync"
-	"time"
 )
 
 func myHandler(w http.ResponseWriter, r *http.Request) {
