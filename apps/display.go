@@ -1,12 +1,15 @@
 package apps
 
 import (
+	"encoding/json"
 	"fmt"
 	"go-distribution-fuzeday/messaging"
 	"go-distribution-fuzeday/models"
 	"net/http"
 	"sync"
 )
+
+var DisplayChannel = make(chan *models.DisplayStatus, 1000)
 
 func myHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "The Football Game Of Tikal!")
@@ -50,9 +53,9 @@ func LaunchDisplay(port int, externalWaitGroup *sync.WaitGroup) {
 	}
 }
 
-	// Game Field updater
-	//	------
-	//	Tip: use iteration over channel range
+// Game Field updater
+//	------
+//	Tip: use iteration over channel range
 func receiveDisplayChannelUpdates(displayInput chan *models.DisplayStatus, gamefield *models.GameField) {
 	//	1. iterate over display channel
 	for {
@@ -67,9 +70,19 @@ func receiveDisplayChannelUpdates(displayInput chan *models.DisplayStatus, gamef
 }
 
 func getDisplayInputChannel() chan *models.DisplayStatus {
+
+	go func() {
+		for {
+			b := <-messaging.DisplayChannelIn
+			var ds = &models.DisplayStatus{}
+			_ = json.Unmarshal(b, ds)
+			DisplayChannel <- ds
+		}
+	}()
+
 	//TODO Challenge (2):
 	//  get []byte input channel from messaging,
 	//  create an internal goroutine that consumes messages from it,
 	//  de-serialize them to return type and populates return DIRECTIONAL channel
-	return messaging.GlobalDisplayChannel
+	return DisplayChannel
 }

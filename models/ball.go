@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"go-distribution-fuzeday/messaging"
 	"go-distribution-fuzeday/utils"
 	"math"
 	"time"
@@ -29,7 +30,7 @@ const GlobalDumping = 0.98
 const g = 0.098
 
 // TODO Challenge (2): replace with input and output channels of type *Ball
-var ballPipeChannel = make(chan []byte, 0)
+//var ballPipeChannel = make(chan []byte, 0)
 
 var ballChannelIn = make(chan *Ball, 1)
 var ballChannelOut = make(chan *Ball, 1)
@@ -80,13 +81,13 @@ func ConnectChannels() {
 		for {
 			ball := <-ballChannelIn
 			b, _ := json.Marshal(ball)
-			ballPipeChannel <- b
+			messaging.BallChannelOut <- b
 		}
 	}()
 
 	go func() {
 		for {
-			b := <-ballPipeChannel
+			b := <-messaging.BallChannelIn
 			nb := &Ball{}
 			_ = json.Unmarshal(b, nb)
 			ballChannelOut <- nb

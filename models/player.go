@@ -100,7 +100,7 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 
 		p.ball = <-GetBallChannelOut()
 
-		if p.getDistanceToBall(p.ball) <= 70 {
+		if p.getDistanceToBall(p.ball) <= 5 {
 			p.applyKick()
 		} else {
 			time.Sleep(20 * time.Millisecond)
@@ -108,7 +108,7 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 		}
 
 		p.ball.LastUpdated = time.Now()
-		reportDisplay(p, displayChannel)
+		reportDisplay(p.ball, displayChannel)
 		GetBallChannelIn() <- p.ball
 	}
 

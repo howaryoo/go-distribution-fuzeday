@@ -1,6 +1,7 @@
 package apps
 
 import (
+	"encoding/json"
 	"fmt"
 	"go-distribution-fuzeday/messaging"
 	"go-distribution-fuzeday/models"
@@ -13,7 +14,6 @@ import (
 
 func JoinGame(players []string, team models.Team, externalWaitGroup *sync.WaitGroup) {
 
-	displayChannel := getDisplayOutputChannel()
 	rand.Seed(time.Now().UnixNano())
 
 	numPlayers := len(players)
@@ -36,7 +36,7 @@ func JoinGame(players []string, team models.Team, externalWaitGroup *sync.WaitGr
 			player.TeamID = models.Brazil
 		}
 		fmt.Printf("Added player %s\n", players[i])
-		player.Activate(displayChannel, wg)
+		player.Activate(DisplayChannel, wg)
 
 	}
 
@@ -51,7 +51,6 @@ func ExecuteSimulation(numPlayers int, externalWaitGroup *sync.WaitGroup) {
 
 	ThrowBall(-1, -1)
 
-	displayChannel := getDisplayOutputChannel()
 	rand.Seed(time.Now().UnixNano())
 	wg := &sync.WaitGroup{}
 	wg.Add(numPlayers)
@@ -75,7 +74,7 @@ func ExecuteSimulation(numPlayers int, externalWaitGroup *sync.WaitGroup) {
 		}
 
 		player.Name = models.GetPlayerName(player.TeamID)
-		player.Activate(displayChannel, wg)
+		player.Activate(DisplayChannel, wg)
 	}
 
 	wg.Wait()
@@ -85,12 +84,21 @@ func ExecuteSimulation(numPlayers int, externalWaitGroup *sync.WaitGroup) {
 
 }
 
-func getDisplayOutputChannel() chan *models.DisplayStatus {
+func getDisplayOutputChannel() <-chan *models.DisplayStatus {
 	//TODO Challenge (2):
 	// get []byte output channel from messaging,
 	// create an internal goroutine that consumes messages from an internal *DisplayStatus channel,
 	// serialize them to []byte and populates return DIRECTIONAL output []byte channel
-	return messaging.GlobalDisplayChannel
+
+	go func() {
+		for {
+			ds := <-DisplayChannel
+			b, _ := json.Marshal(ds)
+			messaging.DisplayChannelOut <- b
+		}
+	}()
+
+	return DisplayChannel
 }
 
 func ThrowBall(x, y float64) {
