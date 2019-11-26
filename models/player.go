@@ -113,7 +113,19 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 	// * Bonus: if waiting for more than 30 seconds for the ball message, check if player ever got the ball. If no, log and wait for another 30 seconds. If not - assume another player got killed with the ball, and throw another one to the channel
 	// * consider utilize "select-case" mechanism
 
-	wg.Done()
+	for {
+		p.ball = <-p.ballChannel
+		if p.getDistanceToBall(p.ball) < 1 {
+			p.applyKick()
+		} else {
+			time.Sleep(20 * time.Millisecond)
+			p.ball.ApplyKinematics()
+		}
+		reportDisplay(p, displayChannel)
+		p.ballChannel <- p.ball
+	}
+
+	//wg.Done()
 }
 
 func (p *Player) getDistanceToBall(ball *Ball) float64 {
