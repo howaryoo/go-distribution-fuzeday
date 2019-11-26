@@ -61,13 +61,14 @@ func (p *Player) Activate(displayChannel chan *DisplayStatus, wg *sync.WaitGroup
 
 	// Closing distance to ball
 	// TODO Challenge (1): launch a goroutine that calls p.runToBall every 200 milliseconds or so...
-	ticker := time.NewTicker(200 * time.Microsecond)
+	ticker := time.NewTicker(200 * time.Millisecond)
 	quit := make(chan struct{})
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
 				p.runToBall()
+				reportDisplay(p, displayChannel)
 			case <-quit:
 				ticker.Stop()
 				return
