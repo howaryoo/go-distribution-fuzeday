@@ -61,12 +61,25 @@ func (p *Player) Activate(displayChannel chan *DisplayStatus, wg *sync.WaitGroup
 
 	// Closing distance to ball
 	// TODO Challenge (1): launch a goroutine that calls p.runToBall every 200 milliseconds or so...
-
+	ticker := time.NewTicker(200 * time.Microsecond)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				p.runToBall()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	// reporting player display
 	// TODO Challenge (1): launch a goroutine that calls reportDisplay() every 200 milliseconds or so...
 
 	// launching main life cycle
 	// TODO Challenge (1): call p.mainLifeCycle in a goroutine and implement it internally
+	//go p.mainLifeCycle()
 
 }
 
