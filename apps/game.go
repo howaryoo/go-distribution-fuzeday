@@ -2,12 +2,13 @@ package apps
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
 	"go-distribution-fuzeday/messaging"
 	"go-distribution-fuzeday/models"
 	"math/rand"
 	"sync"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 func JoinGame(players []string, team models.Team, externalWaitGroup *sync.WaitGroup) {
@@ -107,6 +108,8 @@ func ThrowBall(x, y float64) {
 	bs := &models.Ball{X: x, Y: y, Vx: 0, Vy: 0, Vz: 0, Z: 50}
 	bs.LastUpdated = time.Now()
 
-	models.GetBallChannel() <- bs
+	models.ConnectChannels()
+
+	models.GetBallChannelIn() <- bs
 
 }

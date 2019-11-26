@@ -1,11 +1,11 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
-	"golang.org/x/sync/syncmap"
 	"time"
 
-	"encoding/json"
+	"golang.org/x/sync/syncmap"
 )
 
 type (
