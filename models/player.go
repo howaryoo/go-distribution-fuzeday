@@ -110,21 +110,23 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 	// 4. reportDisplay and publish ball back to the channel
 	// ----------------
 	// * Pay attention to an initial delay before game starts (preferred, for distributed queues to initiate)
-	// * Bonus: if waiting for more than 30 seconds for the ball message, check if player ever got the ball. If no, log and wait for another 30 seconds. If not - assume another player got killed with the ball, and throw another one to the channel
+	// * Bonus: if waiting for more than 30 seconds for the ball message, check if player ever got the ball.
+	//      If no, log and wait for another 30 seconds.
+	//      If not - assume another player got killed with the ball, and throw another one to the channel
 	// * consider utilize "select-case" mechanism
 
 	for {
 		p.ball = <-p.ballChannel
-		if p.getDistanceToBall(p.ball) < 1 {
+		if p.getDistanceToBall(p.ball) < 80 {
 			p.applyKick()
 		} else {
 			time.Sleep(20 * time.Millisecond)
 			p.ball.ApplyKinematics()
 		}
+		p.ball.LastUpdated = time.Now()
 		reportDisplay(p, displayChannel)
 		p.ballChannel <- p.ball
 	}
-
 	//wg.Done()
 }
 
