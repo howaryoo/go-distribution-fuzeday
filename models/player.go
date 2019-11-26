@@ -24,8 +24,6 @@ type Player struct {
 
 	ball *Ball
 
-	ballChannel chan *Ball // TODO Challenge (2): replace with directional input and output channels (<-chan and chan<-)
-
 	idleV     float64
 	idleVx    float64
 	idleVy    float64
@@ -54,8 +52,6 @@ func reportDisplay(item DisplayStatusProvider, channel chan *DisplayStatus) {
 }
 
 func (p *Player) Activate(displayChannel chan *DisplayStatus, wg *sync.WaitGroup) {
-
-	p.ballChannel = GetBallChannel()
 
 	go p.setIdleKinematics()
 
@@ -100,6 +96,22 @@ func (p *Player) setIdleKinematics() {
 
 func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.WaitGroup) {
 
+	for {
+
+		p.ball = <-GetBallChannelOut()
+
+		if p.getDistanceToBall(p.ball) <= 70 {
+			p.applyKick()
+		} else {
+			time.Sleep(20 * time.Millisecond)
+			p.ball.ApplyKinematics()
+		}
+
+		p.ball.LastUpdated = time.Now()
+		reportDisplay(p, displayChannel)
+		GetBallChannelIn() <- p.ball
+	}
+
 	// TODO Tip: a ticker returns a channel that is automatically populated with a time message every defined interval
 	//ticker := time.NewTicker(10 * time.Second)
 
@@ -115,18 +127,6 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 	//      If not - assume another player got killed with the ball, and throw another one to the channel
 	// * consider utilize "select-case" mechanism
 
-	for {
-		p.ball = <-p.ballChannel
-		if p.getDistanceToBall(p.ball) < 80 {
-			p.applyKick()
-		} else {
-			time.Sleep(20 * time.Millisecond)
-			p.ball.ApplyKinematics()
-		}
-		p.ball.LastUpdated = time.Now()
-		reportDisplay(p, displayChannel)
-		p.ballChannel <- p.ball
-	}
 	//wg.Done()
 }
 

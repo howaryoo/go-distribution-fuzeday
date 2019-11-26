@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"go-distribution-fuzeday/utils"
 	"math"
 	"time"
@@ -28,7 +29,10 @@ const GlobalDumping = 0.98
 const g = 0.098
 
 // TODO Challenge (2): replace with input and output channels of type *Ball
-var ballChannel = make(chan *Ball, 1)
+var ballPipeChannel = make(chan []byte, 0)
+
+var ballChannelIn = make(chan<- *Ball, 1)
+var ballChannelOut = make(<-chan *Ball, 1)
 
 func (b *Ball) GetDisplayStatus() *DisplayStatus {
 	res := &DisplayStatus{}
@@ -73,6 +77,33 @@ func (b *Ball) applyKinematicsIteration(timeDiff, iterations float64) {
 //TODO Challenge (2):
 // replace with directional input and output channel getters,
 // connect *Ball channel to messaging []byte channels
-func GetBallChannel() chan *Ball {
-	return ballChannel
+// func GetBallChannel() chan *Ball {
+// 	return ballChannel
+// }
+
+func (b *Ball) ConnectChannels() {
+	go func() {
+		for {
+			ball := <-ballChannelOut
+			b, _ := json.Marshal(ball)
+			ballPipeChannel <- b
+		}
+	}()
+
+	go func() {
+		for {
+			b := <-ballPipeChannel
+			var nb *Ball
+			_ = json.Unmarshal(b, nb)
+			ballChannelIn <- nb
+		}
+	}()
+}
+
+func GetBallChannelIn() chan<- *Ball {
+	return ballChannelIn
+}
+
+func GetBallChannelOut() <-chan *Ball {
+	return ballChannelOut
 }
