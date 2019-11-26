@@ -61,13 +61,26 @@ func (p *Player) Activate(displayChannel chan *DisplayStatus, wg *sync.WaitGroup
 
 	// Closing distance to ball
 	// TODO Challenge (1): launch a goroutine that calls p.runToBall every 200 milliseconds or so...
-
+	ticker := time.NewTicker(200 * time.Millisecond)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				p.runToBall()
+				reportDisplay(p, displayChannel)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	// reporting player display
 	// TODO Challenge (1): launch a goroutine that calls reportDisplay() every 200 milliseconds or so...
 
 	// launching main life cycle
 	// TODO Challenge (1): call p.mainLifeCycle in a goroutine and implement it internally
-
+	go p.mainLifeCycle(displayChannel, wg)
 }
 
 func (p *Player) setIdleKinematics() {
@@ -100,7 +113,19 @@ func (p *Player) mainLifeCycle(displayChannel chan *DisplayStatus, wg *sync.Wait
 	// * Bonus: if waiting for more than 30 seconds for the ball message, check if player ever got the ball. If no, log and wait for another 30 seconds. If not - assume another player got killed with the ball, and throw another one to the channel
 	// * consider utilize "select-case" mechanism
 
-	wg.Done()
+	for {
+		p.ball = <-p.ballChannel
+		if p.getDistanceToBall(p.ball) < 1 {
+			p.applyKick()
+		} else {
+			time.Sleep(20 * time.Millisecond)
+			p.ball.ApplyKinematics()
+		}
+		reportDisplay(p, displayChannel)
+		p.ballChannel <- p.ball
+	}
+
+	//wg.Done()
 }
 
 func (p *Player) getDistanceToBall(ball *Ball) float64 {
